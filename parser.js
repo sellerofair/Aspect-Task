@@ -1,25 +1,20 @@
 "use strict"
 
-// Если гарантируется верный синтаксис XML и конкретная структура данных
-// необходимо использовать этот скрипт
+// Создание абстрактного объекта без использования классов
 
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { Repository, Entity } = require('./classes/repo');
-const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./classes/entity');
-const { Association, Begin, End } = require('./classes/association');
 const { XmlStatementError } = require('./classes/errors');
-
-const { stage } = require('./constants/enums');
-
 const { testData } = require('./constants/data');
+const { stage } = require('./constants/enums');
 
 /**
  * Добавляет прочитанный объект
  * 
  * @param {object[]} stack Текущий стек объектов.
  * @param {string} tag Текущее имя тега.
+ * 
  */
 function addObject(stack, tag) {
     let currentObject = stack[stack.length - 1].object;
@@ -45,7 +40,7 @@ function xml2json(data) {
 // Задание начальных параметров => 
 
     let jsonObject = {};
-    
+
     // Стек, хранящий путь к текущему объекту
     let stack = [
         {
@@ -53,7 +48,7 @@ function xml2json(data) {
             object: jsonObject
         }
     ];
-    
+
     let currentStage = stage.WAITTAG;
     let tag = '';
     let content = '';
@@ -249,3 +244,5 @@ function xml2json(data) {
 // </A>`);
 
 // console.log(testObject);
+
+console.log(xml2json(testData));
