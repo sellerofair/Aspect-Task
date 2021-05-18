@@ -6,7 +6,7 @@
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { Repository, Entity } = require('./classes/repo');
+const { Repository } = require('./classes/repo');
 const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./classes/entity');
 const { Association, Begin, End } = require('./classes/association');
 const { XmlStatementError } = require('./classes/errors');

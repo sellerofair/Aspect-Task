@@ -4,10 +4,12 @@
 // Если есть возможность, можно переделать на ES6.
 // Экспорт см. в конце файла.
 
+const { LinkedString } = require('../classes/parser');
+
 /**
  * Исходные данные в формате XML
  */
-const testData = `			<Association Name="Catalog_Номенклатура_Parent">
+const testData = new LinkedString(`			<Association Name="Catalog_Номенклатура_Parent">
 <End Role="Begin"
         Type="StandardODATA.Catalog_Номенклатура"
         Multiplicity="*"/>
@@ -1529,6 +1531,6 @@ const testData = `			<Association Name="Catalog_Номенклатура_Parent"
         Relationship="StandardODATA.Document_СчетНаОплатуКлиенту_ГлавныйБухгалтер"
         FromRole="Begin"
         ToRole="End"/>
-</EntityType>`;
+</EntityType>`);
 
 module.exports.testData = testData;
