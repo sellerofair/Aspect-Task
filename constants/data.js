@@ -2,9 +2,10 @@
 
 // Модуль в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
+
 // Экспорт см. в конце файла.
 
-const { LinkedString } = require('../classes/parser');
+const { LinkedString } = require('../parser/parser');
 
 /**
  * Исходные данные в формате XML
