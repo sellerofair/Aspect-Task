@@ -6,7 +6,7 @@
 // Если есть возможность, можно переделать на ES6.
 
 const { XmlStatementError } = require('./parser/errors');
-const { Stage } = require('./parser/enums');
+const Stage  = require('./parser/enums').OldStage;
 
 const { testData } = require('./constants/data');
 

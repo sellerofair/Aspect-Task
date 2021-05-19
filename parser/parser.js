@@ -83,24 +83,24 @@ class Parser {
      * Если текст пройден до конца, возвращает false.
      * 
      * @returns { boolean } Результат сканирования
+     * 
+     * @throws { XmlStatementError } Неверный синтаксис
      */
     #parse() {
 
         for (let i = this.#currentIndex; i < this.#length; i++) {
 
-            // console.log('\n');
-            // console.log(char);
-            // console.log(stack);
-            // console.log(currentStage);
-            // console.log(`tag: '${tag}'\nkey: '${key}'\nvalue: '${value}'\ncontent: ${content}`);
-
+            /** Текущий символ */
             let char = this.#thread.text[i];
+
+            /** Следующий символ */
             let nextChar = this.#thread.text[i + 1];
-    
-            let isSpace = /\s/.test(char);      // Проверка, является ли символ пробельным
-    
+
+            /** Является ли текущий символ пробельным? */
+            let isSpace = /\s/.test(char);
+
             switch (this.#params.currentStage) {
-    
+
                 case Stage.WAITTAG:
 
                     if (char === '<') {
@@ -111,12 +111,25 @@ class Parser {
                                 this.#params.currentStage = Stage.CLOSETAG;
                                 this.#currentIndex = i + 2;
                                 return true;
-                        
-                            default:
-                                break;
-                        }
 
-                        currentStage = Stage.TAG;
+                            case '!':
+                                this.#params.currentStage = Stage.COMMENT;
+                                this.#currentIndex = i + 2;
+                                return true;
+
+                            case '?':
+                                this.#params.currentStage = Stage.PROLOG;
+                                this.#currentIndex = i + 2;
+                                return true;
+
+                            case isSpace:
+                                throw new XmlStatementError(`Empty tag name! Position: ${i + 1}`);
+        
+                            default:
+                                this.#params.currentStage = Stage.TAG;
+                                this.#currentIndex = i + 1;
+                                return true;
+                        }
                     }
 
                     break;
