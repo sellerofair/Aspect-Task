@@ -6,12 +6,12 @@
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { Repository } = require('./classes/repo');
-const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./classes/entity');
-const { Association, Begin, End } = require('./classes/association');
-const { XmlStatementError } = require('./classes/errors');
+const { Repository } = require('./entities/repo');
+const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./entities/entity');
+const { Association, Begin, End } = require('./entities/association');
 
-const { stage } = require('./constants/enums');
+const { XmlStatementError } = require('./parser/errors');
+const { stage } = require('./parser/enums');
 
 const { testData } = require('./constants/data');
 

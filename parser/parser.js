@@ -4,8 +4,8 @@
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { stage } = require('../constants/enums');
-const { XmlStatementError } = require('../classes/errors');
+const { stage } = require('./enums');
+const { XmlStatementError } = require('./errors');
 
 /**
  * Объект-обертка для строки.
@@ -64,7 +64,7 @@ class Parser {
      * @returns { symbol } Текущее событие
      */
     next() {
-        if (this.#currentIndex < this.#length  && this.#parse()) {
+        if (this.#currentIndex < this.#length) {
             return { done: false, value: this.#params.currentStage };
         } else {
             return { done: true };
