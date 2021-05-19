@@ -11,27 +11,14 @@ const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('
 const { Association, Begin, End } = require('./entities/association');
 
 const { XmlStatementError } = require('./parser/errors');
-const { stage } = require('./parser/enums');
+const { Parser } = require('./parser/parser');
+const { Stage } = require('./parser/enums');
 
 const { testData } = require('./constants/data');
 
-/**
- * Добавляет прочитанный объект
- * 
- * @param {object[]} stack Текущий стек объектов.
- * @param {string} tag Текущее имя тега.
- */
-function addObject(stack, tag) {
-    let currentObject = stack[stack.length - 1].object;
-    if (tag in currentObject) { currentObject[tag].push({}); }
-    else { currentObject[tag] = [{}]; }
-    stack.push(
-        {
-            tag: tag,
-            object: currentObject[tag][currentObject[tag].length - 1]
-        }
-    );
-}
+let repository = new Repository(['associations', 'enities']);
+
+let parser = new Parser(testData);
 
 /**
  * Преобразует строку в формате XML в JS объект
@@ -40,7 +27,7 @@ function addObject(stack, tag) {
  * @returns {object} Объект, полученный из XML
  * @throws {XmlStatementError} Неверный синтаксис
  */
-function xml2json(data) {
+function xml2json(repository, parser) {
 
 // Задание начальных параметров => 
 

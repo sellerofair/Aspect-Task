@@ -5,9 +5,10 @@
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { XmlStatementError } = require('./classes/errors');
+const { XmlStatementError } = require('./parser/errors');
+const { Stage } = require('./parser/enums');
+
 const { testData } = require('./constants/data');
-const { stage } = require('./constants/enums');
 
 /**
  * Добавляет прочитанный объект
@@ -49,7 +50,7 @@ function xml2json(data) {
         }
     ];
 
-    let currentStage = stage.WAITTAG;
+    let currentStage = Stage.WAITTAG;
     let tag = '';
     let content = '';
     let key = '';
@@ -71,22 +72,22 @@ function xml2json(data) {
 
         switch (currentStage) {
 
-            case stage.WAITTAG:
-                if (char === '<') { currentStage = stage.TAG; }                
+            case Stage.WAITTAG:
+                if (char === '<') { currentStage = Stage.TAG; }                
                 break;
 
-            case stage.TAG:
+            case Stage.TAG:
 
                 if (char === '>') {
                     addObject(stack, tag);
-                    currentStage = stage.WAITCONTENT;
+                    currentStage = Stage.WAITCONTENT;
                     tag = '';
                     break;
                 }
 
                 if (isSpace) {
                     addObject(stack, tag);
-                    currentStage = stage.WAITKEY;
+                    currentStage = Stage.WAITKEY;
                     tag = '';
                     break;
                 }
@@ -95,19 +96,19 @@ function xml2json(data) {
                     if (tag.length != 0) {
                         addObject(stack, tag);
                         stack.pop();
-                        currentStage = stage.WAITTAG;
-                    } else { currentStage = stage.CLOSETAG; }
+                        currentStage = Stage.WAITTAG;
+                    } else { currentStage = Stage.CLOSETAG; }
 
                     break;
                 }
 
                 if (char === '!') {
-                    currentStage = stage.COMMENT;
+                    currentStage = Stage.COMMENT;
                     break;
                 }
 
                 if (char === '?') {
-                    currentStage = stage.PROLOG;
+                    currentStage = Stage.PROLOG;
                     break;
                 }
 
@@ -115,70 +116,70 @@ function xml2json(data) {
 
                 break;
 
-            case stage.COMMENT:
+            case Stage.COMMENT:
                 if (char === '>') {
-                    currentStage = stage.WAITTAG;
+                    currentStage = Stage.WAITTAG;
                     break;
                 }
                 break;
 
-            case stage.PROLOG:
+            case Stage.PROLOG:
                 if (char === '>') {
-                    currentStage = stage.WAITTAG;
+                    currentStage = Stage.WAITTAG;
                     break;
                 }
                 break;
 
-            case stage.WAITKEY:
+            case Stage.WAITKEY:
 
                 if (char === '>') {
-                    currentStage = stage.WAITCONTENT;
+                    currentStage = Stage.WAITCONTENT;
                     break;
                 }
 
                 if (char === '/') {
                     stack.pop();
-                    currentStage = stage.WAITTAG;
+                    currentStage = Stage.WAITTAG;
                     break;
                 }
 
                 if (!isSpace) {
-                    currentStage = stage.KEY;
+                    currentStage = Stage.KEY;
                     key += char;
                     break;
                 }
 
                 break;
 
-            case stage.KEY:
+            case Stage.KEY:
                 if (char === '=') {
-                    currentStage = stage.WAITVALUE;
+                    currentStage = Stage.WAITVALUE;
                     break;
                 }
                 if (isSpace) {
-                    currentStage = stage.WAITEQUAL;
+                    currentStage = Stage.WAITEQUAL;
                     break;
                 }
                 key += char;
                 break;
 
-            case stage.WAITEQUAL:
+            case Stage.WAITEQUAL:
                 if (!isSpace) {
                     if (char === '=') {
-                        currentStage = stage.WAITVALUE;
+                        currentStage = Stage.WAITVALUE;
                         break;
                     } else { throw new XmlStatementError(); }
                 }
                 break;
     
-            case stage.WAITVALUE:
+            case Stage.WAITVALUE:
                 if (char === '"' || char === "'") {
-                    currentStage = stage.VALUE;
+                    currentStage = Stage.VALUE;
                     quote = char;
                 }
                 break;
 
-            case stage.VALUE:
+            case Stage.VALUE:
                 if (char === quote) {
                     try {
                         stack[stack.length - 1].object[key] = JSON.parse(value);
@@ -187,42 +188,42 @@ function xml2json(data) {
                     }
                     key = '';
                     value = '';
-                    currentStage = stage.WAITKEY;
+                    currentStage = Stage.WAITKEY;
                     break;
                 }
                 value += char;
                 break;
 
-            case stage.WAITCONTENT:
+            case Stage.WAITCONTENT:
                 if (char === '<') {
-                    currentStage = stage.TAG;
+                    currentStage = Stage.TAG;
                     break;
                 }
                 if (!isSpace) {
-                    currentStage = stage.CONTENT;
+                    currentStage = Stage.CONTENT;
                     content += char;
                     break;
                 }
                 break;
     
-            case stage.CONTENT:
+            case Stage.CONTENT:
                 if (char === '<') {
                     try {
                         stack[stack.length - 1].object["content"] = JSON.parse(content.trim());
                     } catch {
                         stack[stack.length - 1].object["content"] = content.trim();
                     }
-                    currentStage = stage.TAG;
+                    currentStage = Stage.TAG;
                     content = '';
                 }
                 content += char;
                 break;
 
-            case stage.CLOSETAG:
+            case Stage.CLOSETAG:
                 if (char === '>') {
                     if (stack[stack.length - 1].tag === tag) {
                         stack.pop();
-                        currentStage = stage.WAITTAG;
+                        currentStage = Stage.WAITTAG;
                         tag = '';
                         break;
                     } else { throw new XmlStatementError(); }

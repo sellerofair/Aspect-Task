@@ -8,25 +8,44 @@
  */
 class Repository {
 
-    constructor() {}
-
     /**
-     * Создание репозитория из строки XML
+     * Создает репозиторий с полями, имена которых указаны в массиве в качестве аргумента
      * 
-     * @param {string} data Строка в формате XML
+     * @param {string[]} fields Массив имен полей
      */
-    constructor(data) {
-                                                                                            // TODO
+    constructor(fields) {
+
+        this.#content = {};
+
+        for (let field of fields) { this.addField(field); }
     }
 
-    #associations;
-    #entities;
+    #content;
 
-    getAssociations() { return this.#associations; }
-    getEntities() { return this.#entities; }
+    addField(name) {
 
-    setAssociations(associations) { this.#associations = associations; }
-    setEntities(entities) { this.#entities = entities; }
+        // имя поля с заглавной буквы
+        let nameProper = name[0].toUpperCase() + name.slice(1);
+
+        // новое поле
+        this.#content[name] = [];
+        
+        // геттер
+        this['get' + nameProper] = function() {
+            return this.#content[name];
+        }
+    }
+
+    deleteField(name) {
+
+        // имя поля с заглавной буквы
+        let nameProper = name[0].toUpperCase() + name.slice(1);
+
+        delete this.#content[name];
+        delete this['get' + nameProper];
+    }
+
+    getContent() { return this.#content; }
 
     /**
      * Возвращает экземпляр сущности по ее наименованию

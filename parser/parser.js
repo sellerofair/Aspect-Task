@@ -4,7 +4,7 @@
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { stage } = require('./enums');
+const { Stage } = require('./enums');
 const { XmlStatementError } = require('./errors');
 
 /**
@@ -40,7 +40,7 @@ class Parser {
         this.#length = linkedString.text.length;
 
         this.#params = {
-            currentStage: stage.WAITTAG,
+            currentStage: Stage.WAITTAG,
             tag: '',
             content: '',
             key: '',
@@ -58,7 +58,7 @@ class Parser {
     [Symbol.iterator]() { return this; }
 
     /**
-     * Возвращает следующее событие (одно из указанных в stage)
+     * Возвращает следующее событие (Stage)
      * в цикле for .. of
      * 
      * @returns { symbol } Текущее событие
