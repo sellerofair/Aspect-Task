@@ -1,5 +1,4 @@
 'use strict'
-// Создание абстрактного объекта без использования классов
 
 // Импорт в формате CommonJS для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
@@ -14,24 +13,24 @@ const { XmlStatementError } = require('./errors');
 class LinkedString {
 
     /**
-     * Создает экземпляр обертки
+     * Создает экземпляр обертки.
      * 
-     * @param {string} text Строка источник
+     * @param { string } text Строка источник
      */
     constructor(text) { this.text = text; }
 }
 
 /**
- * Класс парсер.
+ * Класс парсера.
  * Экземпляр парсера сканирует текст на наличие XML тегов и
  * возвращает событие, либо строку в текущей позиции.
  */
 class Parser {
 
     /**
-     * Создает экземпляр парсера
+     * Создает экземпляр парсера.
      * 
-     * @param {LinkedString} linkedString Ссылка на строку
+     * @param { LinkedString } linkedString Ссылка на строку
      */
     constructor(linkedString) {
     
@@ -40,39 +39,245 @@ class Parser {
         this.#length = linkedString.text.length;
 
         this.#params = {
+            stack: [],
             currentStage: Stage.WAITTAG,
             tag: '',
             content: '',
             key: '',
             value: '',
             quote: '"',
-            isSpace: false        
         }
     }
 
+    /** Поток символов */
     #thread;
+
+    /** Текущие параметры парсера */
     #params
+
+    /** Индекс текущего положения парсера */
     #currentIndex;
+
+    /** Длина строки, которую сканирует парсер */
     #length;
 
     [Symbol.iterator]() { return this; }
 
     /**
      * Возвращает следующее событие (Stage)
-     * в цикле for .. of
+     * в цикле for .. of.
      * 
-     * @returns { symbol } Текущее событие
+     * @returns { {boolean, symbol} } Текущее событие
      */
     next() {
-        if (this.#currentIndex < this.#length) {
+
+        if (this.#currentIndex < this.#length && this.#parse()) {            
             return { done: false, value: this.#params.currentStage };
         } else {
             return { done: true };
         }
     }
 
+    /**
+     * Сканирует текст и меняет currentStage в params.
+     * Если текст пройден до конца, возвращает false.
+     * 
+     * @returns { boolean } Результат сканирования
+     */
     #parse() {
-                                                                                    // TODO
+
+        for (let i = this.#currentIndex; i < this.#length; i++) {
+
+            // console.log('\n');
+            // console.log(char);
+            // console.log(stack);
+            // console.log(currentStage);
+            // console.log(`tag: '${tag}'\nkey: '${key}'\nvalue: '${value}'\ncontent: ${content}`);
+
+            let char = this.#thread.text[i];
+            let nextChar = this.#thread.text[i + 1];
+    
+            let isSpace = /\s/.test(char);      // Проверка, является ли символ пробельным
+    
+            switch (this.#params.currentStage) {
+    
+                case Stage.WAITTAG:
+
+                    if (char === '<') {
+
+                        switch (nextChar) {
+
+                            case '/':
+                                this.#params.currentStage = Stage.CLOSETAG;
+                                this.#currentIndex = i + 2;
+                                return true;
+                        
+                            default:
+                                break;
+                        }
+
+                        currentStage = Stage.TAG;
+                    }
+
+                    break;
+    
+                case Stage.TAG:
+    
+                    if (char === '>') {
+                        addObject(stack, tag);
+                        currentStage = Stage.WAITCONTENT;
+                        tag = '';
+                        break;
+                    }
+    
+                    if (isSpace) {
+                        addObject(stack, tag);
+                        currentStage = Stage.WAITKEY;
+                        tag = '';
+                        break;
+                    }
+    
+                    if (char === '/') {
+                        if (tag.length != 0) {
+                            addObject(stack, tag);
+                            stack.pop();
+                            currentStage = Stage.WAITTAG;
+                        } else { currentStage = Stage.CLOSETAG; }
+    
+                        break;
+                    }
+    
+                    if (char === '!') {
+                        currentStage = Stage.COMMENT;
+                        break;
+                    }
+    
+                    if (char === '?') {
+                        currentStage = Stage.PROLOG;
+                        break;
+                    }
+    
+                    tag += char;
+    
+                    break;
+    
+                case Stage.COMMENT:
+                    if (char === '>') {
+                        currentStage = Stage.WAITTAG;
+                        break;
+                    }
+                    break;
+    
+                case Stage.PROLOG:
+                    if (char === '>') {
+                        currentStage = Stage.WAITTAG;
+                        break;
+                    }
+                    break;
+    
+                case Stage.WAITKEY:
+    
+                    if (char === '>') {
+                        currentStage = Stage.WAITCONTENT;
+                        break;
+                    }
+    
+                    if (char === '/') {
+                        stack.pop();
+                        currentStage = Stage.WAITTAG;
+                        break;
+                    }
+    
+                    if (!isSpace) {
+                        currentStage = Stage.KEY;
+                        key += char;
+                        break;
+                    }
+    
+                    break;
+    
+                case Stage.KEY:
+                    if (char === '=') {
+                        currentStage = Stage.WAITVALUE;
+                        break;
+                    }
+                    if (isSpace) {
+                        currentStage = Stage.WAITEQUAL;
+                        break;
+                    }
+                    key += char;
+                    break;
+    
+                case Stage.WAITEQUAL:
+                    if (!isSpace) {
+                        if (char === '=') {
+                            currentStage = Stage.WAITVALUE;
+                            break;
+                        } else { throw new XmlStatementError(); }
+                    }
+                    break;
+        
+                case Stage.WAITVALUE:
+                    if (char === '"' || char === "'") {
+                        currentStage = Stage.VALUE;
+                        quote = char;
+                    }
+                    break;
+    
+                case Stage.VALUE:
+                    if (char === quote) {
+                        try {
+                            stack[stack.length - 1].object[key] = JSON.parse(value);
+                        } catch {
+                            stack[stack.length - 1].object[key] = value;
+                        }
+                        key = '';
+                        value = '';
+                        currentStage = Stage.WAITKEY;
+                        break;
+                    }
+                    value += char;
+                    break;
+    
+                case Stage.WAITCONTENT:
+                    if (char === '<') {
+                        currentStage = Stage.TAG;
+                        break;
+                    }
+                    if (!isSpace) {
+                        currentStage = Stage.CONTENT;
+                        content += char;
+                        break;
+                    }
+                    break;
+        
+                case Stage.CONTENT:
+                    if (char === '<') {
+                        try {
+                            stack[stack.length - 1].object["content"] = JSON.parse(content.trim());
+                        } catch {
+                            stack[stack.length - 1].object["content"] = content.trim();
+                        }
+                        currentStage = Stage.TAG;
+                        content = '';
+                    }
+                    content += char;
+                    break;
+    
+                case Stage.CLOSETAG:
+                    if (char === '>') {
+                        if (stack[stack.length - 1].tag === tag) {
+                            stack.pop();
+                            currentStage = Stage.WAITTAG;
+                            tag = '';
+                            break;
+                        } else { throw new XmlStatementError(); }
+                    }
+                    tag += char;
+            }
+        }
+
+        return false;
     }
 }
 

@@ -9,9 +9,9 @@
 class Repository {
 
     /**
-     * Создает репозиторий с полями, имена которых указаны в массиве в качестве аргумента
+     * Создает репозиторий с полями, имена которых указаны в массиве в качестве аргумента.
      * 
-     * @param {string[]} fields Массив имен полей
+     * @param { string[] } fields Массив имен полей
      */
     constructor(fields) {
 
@@ -20,38 +20,57 @@ class Repository {
         for (let field of fields) { this.addField(field); }
     }
 
+    /** Содержимое репозитория */
     #content;
 
+    /**
+     * Возвращает содержимое репозитория.
+     * 
+     * @returns { object } Содержимое репозитория
+     */
+    getContent() { return this.#content; }
+
+    /**
+     * Добавляет новое поле в репозиторий.
+     * 
+     * @param { string } name Имя нового поля
+     */
     addField(name) {
 
-        // имя поля с заглавной буквы
+        /** Имя поля с заглавной буквы */
         let nameProper = name[0].toUpperCase() + name.slice(1);
 
-        // новое поле
+        // Добавление нового поля
         this.#content[name] = [];
         
-        // геттер
+        // Добавление геттера для получения содержимого поля по имени
         this['get' + nameProper] = function() {
             return this.#content[name];
         }
     }
 
+    /**
+     * Удаление поля из репозитория по имени.
+     * 
+     * @param { string } name Имя поля для удаления
+     */
     deleteField(name) {
 
-        // имя поля с заглавной буквы
+        /** Имя поля с заглавной буквы */
         let nameProper = name[0].toUpperCase() + name.slice(1);
 
+        // Удаление поля
         delete this.#content[name];
+
+        // Удаление геттера
         delete this['get' + nameProper];
     }
-
-    getContent() { return this.#content; }
 
     /**
      * Возвращает экземпляр сущности по ее наименованию
      * 
-     * @param {string} entityName Наименование сущности
-     * @returns {RepoEntity} Экземпляр сущности
+     * @param { string } entityName Наименование сущности
+     * @returns { RepoEntity } Экземпляр сущности
      */
     getEnityByName(entityName) {
 
