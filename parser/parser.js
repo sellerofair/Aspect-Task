@@ -53,7 +53,7 @@ class Parser {
     #thread;
 
     /** Текущие параметры парсера */
-    #params
+    #params;
 
     /** Индекс текущего положения парсера */
     #currentIndex;
@@ -103,74 +103,15 @@ class Parser {
 
                 case Stage.WAITTAG:
 
-                    if (char === '<') {
-
-                        switch (nextChar) {
-
-                            case '/':
-                                this.#params.currentStage = Stage.CLOSETAG;
-                                this.#currentIndex = i + 2;
-                                return true;
-
-                            case '!':
-                                this.#params.currentStage = Stage.COMMENT;
-                                this.#currentIndex = i + 2;
-                                return true;
-
-                            case '?':
-                                this.#params.currentStage = Stage.PROLOG;
-                                this.#currentIndex = i + 2;
-                                return true;
-
-                            case isSpace:
-                                throw new XmlStatementError(`Empty tag name! Position: ${i + 1}`);
-        
-                            default:
-                                this.#params.currentStage = Stage.TAG;
-                                this.#currentIndex = i + 1;
-                                return true;
-                        }
-                    }
+                    if (this.#waitTagStatus(char, isSpace, nextChar, i)) { return true; }
 
                     break;
     
-                case Stage.TAG:
+                case Stage.READTAG:
     
-                    if (char === '>') {
-                        addObject(stack, tag);
-                        currentStage = Stage.WAITCONTENT;
-                        tag = '';
-                        break;
-                    }
+                    if (this.#readTagStatus()) { return true; }
     
-                    if (isSpace) {
-                        addObject(stack, tag);
-                        currentStage = Stage.WAITKEY;
-                        tag = '';
-                        break;
-                    }
-    
-                    if (char === '/') {
-                        if (tag.length != 0) {
-                            addObject(stack, tag);
-                            stack.pop();
-                            currentStage = Stage.WAITTAG;
-                        } else { currentStage = Stage.CLOSETAG; }
-    
-                        break;
-                    }
-    
-                    if (char === '!') {
-                        currentStage = Stage.COMMENT;
-                        break;
-                    }
-    
-                    if (char === '?') {
-                        currentStage = Stage.PROLOG;
-                        break;
-                    }
-    
-                    tag += char;
+                    this.#params.tag += char;
     
                     break;
     
@@ -291,6 +232,78 @@ class Parser {
         }
 
         return false;
+    }
+
+    /**
+     * Ожидание тэга (символа '<').
+     * 
+     * @param { string } currentChar 
+     * @param { boolean } isSpace 
+     * @param { string } nextChar 
+     * @param { number } currentIndex 
+     * 
+     * @returns { boolean } true, если currentChar - '<'
+     * 
+     * @throws { XmlStatementError }
+     */
+    #waitTagStatus(currentChar, isSpace, nextChar, currentIndex) {
+
+        if (currentChar === '<') {
+
+            switch (nextChar) {
+
+                case '/':
+                    this.#params.currentStage = Stage.READCLOSETAG;
+                    this.#currentIndex = currentIndex + 2;
+                    return true;
+
+                case '!':
+                    this.#params.currentStage = Stage.READCOMMENT;
+                    this.#currentIndex = currentIndex + 2;
+                    return true;
+
+                case '?':
+                    this.#params.currentStage = Stage.READPROLOG;
+                    this.#currentIndex = currentIndex + 2;
+                    return true;
+
+                case isSpace:
+                    throw new XmlStatementError(`Empty tag name! Position: ${i + 1}`);
+
+                default:
+                    this.#params.currentStage = Stage.READTAG;
+                    this.#currentIndex = i + 1;
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+                                                            // TODO
+    #readTagStatus(currentChar, isSpace) {
+
+        if (currentChar === '>') {
+            addObject(stack, tag);
+            currentStage = Stage.WAITCONTENT;
+            tag = '';
+            break;
+        }
+
+        if (isSpace) {
+            addObject(stack, tag);
+            currentStage = Stage.WAITKEY;
+            tag = '';
+            break;
+        }
+
+        if (currentChar === '/') {
+            addObject(stack, tag);
+            stack.pop();
+            currentStage = Stage.WAITTAG;
+
+            break;
+        }
     }
 }
 

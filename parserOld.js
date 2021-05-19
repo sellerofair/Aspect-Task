@@ -246,4 +246,4 @@ function xml2json(data) {
 
 // console.log(testObject);
 
-console.log(xml2json(testData));
+console.log(xml2json(testData.text));
