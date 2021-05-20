@@ -21,6 +21,52 @@ class LinkedString {
 }
 
 /**
+ * Параметры парсера.
+ */
+class ParserParameters {
+
+    constructor() {
+
+        /** 
+         * Стек тегов
+         * 
+         * @type { string[] }
+         */
+        this.stack = [];
+
+        /**
+         * Тег в текущем положении парсера
+         * 
+         * @type { string }
+         */
+        this.tag = '';
+
+        /**
+         * Атрибуты в текущем положении парсера.
+         * 
+         * @type { {key: string, value: string}[] }
+         */
+        this.attributes = [];
+
+        /**
+         * Содержимое в текущем положении парсера
+         * Например <teg>content</teg>,
+         * где content - не объект!!!
+         * 
+         * @type { string }
+         */
+        this.content = '';
+
+        /**
+         * Хранит, какие кавычки в данный момент использует парсер
+         * 
+         * @type { string }
+         */
+        this.quote = '"';
+    }
+}
+
+/**
  * Класс парсера.
  * Экземпляр парсера сканирует текст на наличие XML тегов и
  * возвращает событие, либо строку в текущей позиции.
@@ -35,22 +81,19 @@ class Parser {
     constructor(linkedString) {
     
         this.#thread = linkedString;
+        this.#prolog = '';
         this.#currentIndex = 0;
+        this.#currentStage = Stage.WAITTAG;
+        this.#nextStage = Stage.WAITTAG;
         this.#length = linkedString.text.length;
-
-        this.#params = {
-            stack: [],
-            currentStage: Stage.WAITTAG,
-            tag: '',
-            content: '',
-            key: '',
-            value: '',
-            quote: '"',
-        }
+        this.#params = new ParserParameters;
     }
 
     /** Поток символов */
     #thread;
+
+    /** Пролог */
+    #prolog;
 
     /** Текущие параметры парсера */
     #params;
@@ -58,98 +101,120 @@ class Parser {
     /** Индекс текущего положения парсера */
     #currentIndex;
 
+    /** Текущее событие парсера (TAG, CLOSETAG, CONTENT, KEY, VALUE) */
+    #currentStage;
+
+    /** Следующее событие парсера (TAG, CLOSETAG, CONTENT, KEY, VALUE) */
+    #nextStage;
+
     /** Длина строки, которую сканирует парсер */
     #length;
 
     [Symbol.iterator]() { return this; }
 
     /**
-     * Возвращает следующее событие (Stage)
-     * в цикле for .. of.
+     * Возвращает следующее событие (Stage) в цикле for .. of
+     * (OPENTAG, CLOSETAG, SINGLETAG, CONTENT).
      * 
-     * @returns { {boolean, symbol} } Текущее событие
+     * @returns { {done: boolean, value: symbol} } Текущее событие
+     * 
+     * @throws { XmlStatementError } Неверный синтаксис
      */
     next() {
 
-        if (this.#currentIndex < this.#length && this.#parse()) {            
-            return { done: false, value: this.#params.currentStage };
-        } else {
-            return { done: true };
-        }
+        this.#currentStage = this.#nextStage;
+        this.#params.tag = '';
+        this.#params.content = '';
+        this.#params.attributes = {};
+
+        this.#parse();
+
+        if (this.#currentIndex < this.#length) {
+
+            return {
+                done: false,
+                value: this.#currentStage
+            };
+
+        } else { return { done: true }; }
     }
 
     /**
-     * Сканирует текст и меняет currentStage в params.
-     * Если текст пройден до конца, возвращает false.
-     * 
-     * @returns { boolean } Результат сканирования
+     * Возвращает прочитанную информацию.
+     */
+    getNext() {
+        
+        try { return JSON.parse(this.#params.buffer.trim()); }
+        
+        catch { return this.#params.buffer.trim(); }
+    }
+
+    /**
+     * Сканирует текст, меняет параметры парсера (this.#params).
      * 
      * @throws { XmlStatementError } Неверный синтаксис
      */
     #parse() {
 
-        for (let i = this.#currentIndex; i < this.#length; i++) {
+        for (; this.#currentIndex < this.#length; this.#currentIndex++) {
 
             /** Текущий символ */
-            let char = this.#thread.text[i];
+            let currentChar = this.#thread.text[this.#currentIndex];
 
             /** Следующий символ */
-            let nextChar = this.#thread.text[i + 1];
+            let nextChar = this.#thread.text[this.#currentIndex + 1];
 
             /** Является ли текущий символ пробельным? */
-            let isSpace = /\s/.test(char);
+            let currentIsSpace = /\s/.test(currentChar);
 
-            switch (this.#params.currentStage) {
+            /** Является ли следующий символ пробельным? */
+            let nextIsSpace = /\s/.test(currentChar);
+
+            switch (this.#currentStage) {
 
                 case Stage.WAITTAG:
 
-                    if (this.#waitTagStatus(char, isSpace, nextChar, i)) { return true; }
+                    if (currentChar === '<') {
+
+                        this.#switchWaitTag(nextChar, nextIsSpace);
+                    }
+
+                    break;
+
+                case Stage.TAG:
+
+                    let {
+                        tagIsFormed: tagIsFormed,
+                        parseIsCompleted: parseIsCompleted
+                    } = this.#readTagStatus(currentChar, currentIsSpace, nextChar);
+
+                    if (tagIsFormed) break;
+                    if (parseIsCompleted) return;
+
+                    this.#params.tag += currentChar;
 
                     break;
     
-                case Stage.READTAG:
-    
-                    if (this.#readTagStatus()) { return true; }
-    
-                    this.#params.tag += char;
-    
-                    break;
-    
                 case Stage.COMMENT:
-                    if (char === '>') {
-                        currentStage = Stage.WAITTAG;
-                        break;
+                    if (currentChar === '>') { 
+                        this.#currentStage = Stage.WAITTAG;
                     }
                     break;
-    
+
                 case Stage.PROLOG:
-                    if (char === '>') {
-                        currentStage = Stage.WAITTAG;
+                    if (currentChar === '>') {
+                        this.#currentStage = Stage.WAITTAG;
                         break;
                     }
+                    this.#prolog += currentChar;
                     break;
-    
+
                 case Stage.WAITKEY:
-    
-                    if (char === '>') {
-                        currentStage = Stage.WAITCONTENT;
-                        break;
+                    if (this.#waitKeyStatus(currentChar, currentIsSpace, nextChar)) {
+                        return;
                     }
-    
-                    if (char === '/') {
-                        stack.pop();
-                        currentStage = Stage.WAITTAG;
-                        break;
-                    }
-    
-                    if (!isSpace) {
-                        currentStage = Stage.KEY;
-                        key += char;
-                        break;
-                    }
-    
                     break;
-    
+
                 case Stage.KEY:
                     if (char === '=') {
                         currentStage = Stage.WAITVALUE;
@@ -230,80 +295,146 @@ class Parser {
                     tag += char;
             }
         }
-
-        return false;
     }
 
     /**
-     * Ожидание тэга (символа '<').
+     * Выбор события после WAITTAG в зависимости от следующего символа.
      * 
-     * @param { string } currentChar 
-     * @param { boolean } isSpace 
-     * @param { string } nextChar 
-     * @param { number } currentIndex 
+     * @param { string } nextChar Следующий символ
+     * @param { boolean } nextIsSpace Является ли следующий символ пробельным?
      * 
-     * @returns { boolean } true, если currentChar - '<'
-     * 
-     * @throws { XmlStatementError }
+     * @throws { XmlStatementError } Неверный синтаксис
      */
-    #waitTagStatus(currentChar, isSpace, nextChar, currentIndex) {
+    #switchWaitTag(nextChar, nextIsSpace) {
 
-        if (currentChar === '<') {
+        if (nextIsSpace) {
 
-            switch (nextChar) {
+            throw new XmlStatementError(`Empty tag name! Position: ${this.#currentIndex + 1}`);
+        }
 
-                case '/':
-                    this.#params.currentStage = Stage.READCLOSETAG;
-                    this.#currentIndex = currentIndex + 2;
-                    return true;
+        switch (nextChar) {
 
-                case '!':
-                    this.#params.currentStage = Stage.READCOMMENT;
-                    this.#currentIndex = currentIndex + 2;
-                    return true;
+            case '/':
+                this.#currentStage = Stage.CLOSETAG;
+                this.#currentIndex++;
+                break;
 
-                case '?':
-                    this.#params.currentStage = Stage.READPROLOG;
-                    this.#currentIndex = currentIndex + 2;
-                    return true;
+            case '!':
+                this.#currentStage = Stage.COMMENT;
+                this.#currentIndex++;
+                break;
 
-                case isSpace:
-                    throw new XmlStatementError(`Empty tag name! Position: ${i + 1}`);
+            case '?':
 
-                default:
-                    this.#params.currentStage = Stage.READTAG;
-                    this.#currentIndex = i + 1;
-                    return true;
-            }
+                if (this.#prolog != '') {
+
+                    throw new XmlStatementError(`Another prolog! Position: ${this.#currentIndex + 1}`);
+                }
+
+                this.#currentStage = Stage.PROLOG;
+                this.#currentIndex++;
+                break;
+
+            case '>':
+                throw new XmlStatementError(`Empty tag name! Position: ${this.#currentIndex + 1}`);
+
+            default:
+                this.#currentStage = Stage.TAG;
+                this.#params.tag += nextChar;
+                this.#currentIndex++;
+                break;
+        }
+    }
+
+    /**
+     * Выбор события при чтении тега.
+     * 
+     * @param { string } currentChar Текущий символ
+     * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
+     * @param { string } nextChar Следующий символ
+     * 
+     * @returns { {tagIsFormed: boolean, parseIsCompleted: boolean} } Результат парсинга
+     * 
+     * @throws { XmlStatementError } Неверный синтаксис
+    */
+    #readTagStatus(currentChar, currentIsSpace, nextChar) {
+
+        if (currentIsSpace) {
+
+            currentStage = Stage.WAITKEY;
+
+            return {
+                tagIsFormed: true,
+                parseIsCompleted: false
+            };
+        }
+
+       switch (currentChar) {
+
+            case '>':
+
+                this.#params.stack.push(this.#params.tag);
+                this.#currentStage = Stage.OPENTAG;
+                this.#nextStage = Stage.WAITCONTENT;
+
+                return {
+                    tagIsFormed: true,
+                    parseIsCompleted: true
+                };
+
+            case '/':
+
+                if (nextChar != '>') {
+
+                    throw new XmlStatementError(`Tag is not closed! Position: ${this.#currentIndex + 1}`);
+                }
+
+                this.#currentStage = Stage.SINGLETAG;
+                this.#nextStage = Stage.WAITTAG;
+
+                return {
+                    tagIsFormed: true,
+                    parseIsCompleted: true
+                };
+        }
+
+        return {
+            tagIsFormed: false,
+            parseIsCompleted: false
+        };
+    }
+
+    #waitKeyStatus(currentChar, currentIsSpace, nextChar) {
+
+        switch (currentChar) {
+
+            case '>':
+
+                this.#params.stack.push(this.#params.tag);
+                this.#currentStage = Stage.OPENTAG;
+                this.#nextStage = Stage.WAITCONTENT;
+
+                return true;
+
+            case '/':
+
+                if (nextChar != '>') {
+
+                    throw new XmlStatementError(`Tag is not closed! Position: ${this.#currentIndex + 1}`);
+                }
+
+                this.#currentStage = Stage.SINGLETAG;
+                this.#nextStage = Stage.WAITTAG;
+
+                return true;
+        }
+
+        if (!currentIsSpace) {
+            this.#currentStage = Stage.KEY;
+            this.#params.key += currentChar;
         }
 
         return false;
-    }
-
-                                                            // TODO
-    #readTagStatus(currentChar, isSpace) {
-
-        if (currentChar === '>') {
-            addObject(stack, tag);
-            currentStage = Stage.WAITCONTENT;
-            tag = '';
-            break;
-        }
-
-        if (isSpace) {
-            addObject(stack, tag);
-            currentStage = Stage.WAITKEY;
-            tag = '';
-            break;
-        }
-
-        if (currentChar === '/') {
-            addObject(stack, tag);
-            stack.pop();
-            currentStage = Stage.WAITTAG;
-
-            break;
-        }
     }
 }
 
