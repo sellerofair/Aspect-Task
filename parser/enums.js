@@ -1,7 +1,9 @@
 'use strict'
 
-// Модуль в формате CommonJS для тестов в NodeJS.
+// Использованы CommonJS модули для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
+
+const { StageInstatiationError } = require('./errors');
 
 /**
  * Набор возможных событий при парсинге XML.
@@ -9,10 +11,7 @@
  */
  class Stage {
 
-    constructor() {
-
-          throw new Error('Stage is enumerated type and can\'t be instantiated.');
-    }
+    constructor() { throw new StageInstatiationError(); }
 
     static WAITTAG = Symbol('WAITTAG');             // Ожидание открытия тега (символа '<')
     static TAG = Symbol('TAG');                     // Чтение тега
@@ -38,10 +37,7 @@
  */
 class OldStage {
 
-    constructor() {
-
-          throw new Error('Stage is enumerated type and can\'t be instantiated.');
-    }
+    constructor() { throw new StageInstatiationError(); }
 
     static WAITTAG = Symbol('WAITTAG');             // Ожидание открытия тега (символа '<')
     static TAG = Symbol('TAG');                     // Чтение имени тега

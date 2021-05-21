@@ -1,11 +1,9 @@
 'use strict'
 
-// Модуль в формате CommonJS для тестов в NodeJS.
+// Использованы CommonJS модули для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-/**
- * Класс ассоциации
- */
+/** Класс ассоциации */
 class Association {
 
     constructor() {}
@@ -23,9 +21,7 @@ class Association {
     setEnd(end) { this.#end = end; }
 }
 
-/**
- * Класс роли
- */
+/** Класс роли */
 class Role {
 
     constructor() {}

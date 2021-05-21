@@ -1,11 +1,9 @@
 'use strict'
 
-// Модуль в формате CommonJS для тестов в NodeJS.
+// Использованы CommonJS модули для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-/**
- * Класс типа сущности
- */
+/** Класс типа сущности */
 class EntityType {
 
     constructor() { this.#openType = false; }
@@ -26,9 +24,7 @@ class EntityType {
     setProperties(properties) { this.#properties = properties }
 }
 
-/**
- * Класс ключа
- */
+/** Класс ключа */
 class Key {
 
     constructor() {}
@@ -40,9 +36,7 @@ class Key {
     setPropertyRefs(propertyRefs) { this.#propertyRefs = propertyRefs; }
 }
 
-/**
- * Класс ссылочного свойста
- */
+/** Класс ссылочного свойста */
 class PropertyRef {
 
     constructor() {}
@@ -54,9 +48,7 @@ class PropertyRef {
     setName(name) { this.#name = name; }
 }
 
-/**
- * Класс свойства
- */
+/** Класс свойства */
 class Property {
 
     constructor() {}
@@ -74,9 +66,7 @@ class Property {
     setNullable(nullable) { this.#nullable = nullable }
 }
 
-/**
- * Класс навигационного свойства
- */
+/** Класс навигационного свойства */
 class NavigationProperty {
 
     constructor() {}
