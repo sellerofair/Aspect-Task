@@ -17,7 +17,7 @@ class Repository {
         for (let field of fields) { this.addField(field); }
     }
 
-    /** Содержимое репозитория */
+    /** Содержимое репозитория @type { any[] }*/
     #content;
 
     /** Возвращает содержимое репозитория.
@@ -38,7 +38,10 @@ class Repository {
         // Добавление нового поля
         this.#content[name] = [];
         
-        // Добавление геттера для получения содержимого поля по имени
+        /** Геттер для получения массива полей
+         * 
+         * @returns { function: void }
+         */
         this['get' + nameProper] = function() {
             return this.#content[name];
         }

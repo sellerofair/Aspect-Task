@@ -249,6 +249,7 @@ class Parser {
                 case Stage.PROLOG:
                     this.#readProlog(currentChar);
                     break;
+
             }
         }
     }
