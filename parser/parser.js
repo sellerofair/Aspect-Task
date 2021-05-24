@@ -173,16 +173,9 @@ class Parser {
 
         for (; this.#currentIndex < this.#length; this.#currentIndex++) {
 
-            /** Текущий символ */
             let currentChar = this.#thread.text[this.#currentIndex];
-
-            /** Следующий символ */
             let nextChar = this.#thread.text[this.#currentIndex + 1];
-
-            /** Является ли текущий символ пробельным? */
             let currentIsSpace = /\s/.test(currentChar);
-
-            /** Является ли следующий символ пробельным? */
             let nextIsSpace = /\s/.test(currentChar);
 
             switch (this.#currentStage) {
@@ -250,18 +243,12 @@ class Parser {
                     }
                     break;
 
-                case Stage.COMMENT:                                 // TODO make a function instead
-                    if (currentChar === '>') { 
-                        this.#currentStage = Stage.WAITTAG;
-                    }
+                case Stage.COMMENT:
+                    this.#readComment(currentChar);
                     break;
 
                 case Stage.PROLOG:
-                    if (currentChar === '>') {
-                        this.#currentStage = Stage.WAITTAG;
-                        break;
-                    }
-                    this.#prolog += currentChar;
+                    this.#readProlog(currentChar);
                     break;
             }
         }
@@ -380,6 +367,7 @@ class Parser {
 
     /**
      * Выбор события после WAITKEY.
+     * Возвращет true, если необходимо завершить парсинг текущего блока.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -580,6 +568,16 @@ class Parser {
         this.#params.content = content;
     }
 
+    /**
+     * Читает закрывающий тег.
+     * Возвращет true, если необходимо завершить парсинг текущего блока.
+     * 
+     * @param { string } currentChar Текущий символ
+     * 
+     * @returns { boolean } Результат парсинга
+     * 
+     * @throws { XmlStatementError } Неверный синтаксис
+     */
     #closeTagStatus(currentChar) {
 
         switch (currentChar) {
@@ -608,6 +606,30 @@ class Parser {
         this.#params.tag += currentChar;
 
         return false;
+    }
+
+    /**
+     * Читает комментарий.
+     * 
+     * @param { string } currentChar Текущий символ
+     */
+    #readComment(currentChar) {
+        if (currentChar === '>') { 
+            this.#currentStage = Stage.WAITTAG;
+        }
+    }
+
+    /**
+     * Читает пролог.
+     * 
+     * @param { string } currentChar Текущий символ
+     */
+    #readProlog(currentChar) {
+        if (currentChar === '>') {
+            this.#currentStage = Stage.WAITTAG;
+            break;
+        }
+        this.#prolog += currentChar;
     }
 }
 
