@@ -6,21 +6,18 @@
 const { Stage } = require('./enums');
 const { XmlStatementError } = require('./errors');
 
-/**
- * Объект-обертка для строки.
+/** Объект-обертка для строки.
  * Нужен для исключения двойного хранения строки с данными.
  */
 class LinkedString {
 
-    /**
-     * Создает экземпляр обертки.
+    /** Создает экземпляр обертки.
      * 
      * @param { string } text Строка источник
      */
     constructor(text) { this.text = text; }
 
-    /** 
-     * Содержимое
+    /** Содержимое.
      * 
      * @type { string }
      */
@@ -41,35 +38,31 @@ class ParserParameters {
         this.quote = '"';
     }
 
-    /** 
-     * Стек тегов
+    /** Стек тегов.
      * 
      * @type { string[] }
      */
     stack;
 
-    /** Тег в текущем положении парсера */
+    /** Тег в текущем положении парсера. */
     tag;
 
-    /**
-     * Атрибуты в текущем положении парсера.
+    /** Атрибуты в текущем положении парсера.
      * 
      * @type { {key: string, value: any}[] }
      */
     attributes;
 
-    /** Ключ атрибута в текущем положении парсера */
+    /** Ключ атрибута в текущем положении парсера. */
     key;
 
-    /**
-     * Значение атрибута в текущем положении парсера
+    /** Значение атрибута в текущем положении парсера.
      * 
      * @type { any }
      */
     value;
 
-    /**
-     * Содержимое в текущем положении парсера
+    /** Содержимое в текущем положении парсера.
      * Например <teg>content</teg>,
      * где content - не объект!!!
      * 
@@ -77,19 +70,17 @@ class ParserParameters {
      */
     content;
 
-    /** Хранит, какие кавычки в данный момент использует парсер */
+    /** Хранит, какие кавычки в данный момент использует парсер. */
     quote;
 }
 
-/**
- * Класс парсера.
+/** Класс парсера.
  * Экземпляр парсера сканирует текст на наличие XML тегов и
  * возвращает событие, либо строку в текущей позиции.
  */
 class Parser {
 
-    /**
-     * Создает экземпляр парсера.
+    /** Создает экземпляр парсера.
      * 
      * @param { LinkedString } linkedString Ссылка на строку
      */
@@ -104,31 +95,48 @@ class Parser {
         this.#params = new ParserParameters;
     }
 
-    /** Поток символов */
+    /** Поток символов. */
     #thread;
 
-    /** Пролог */
+    /** Пролог. */
     #prolog;
 
-    /** Текущие параметры парсера */
+    /** Текущие параметры парсера. */
     #params;
 
-    /** Индекс текущего положения парсера */
+    /** Индекс текущего положения парсера. */
     #currentIndex;
 
-    /** Текущее событие парсера (TAG, CLOSETAG, CONTENT, KEY, VALUE) */
+    /** Текущее событие парсера (OPENTAG, CLOSETAG, SINGLETAG, CONTENT). */
     #currentStage;
 
-    /** Следующее событие парсера (TAG, CLOSETAG, CONTENT, KEY, VALUE) */
+    /** Следующее событие парсера. */
     #nextStage;
 
-    /** Длина строки, которую сканирует парсер */
+    /** Длина строки, которую сканирует парсер. */
     #length;
 
     [Symbol.iterator]() { return this; }
 
-    /**
-     * Возвращает следующее событие (Stage) в цикле for .. of
+    /** Возвращает имя тега.
+     * 
+     * @returns { string } Имя тега
+     */
+     getTagName() { return this.#params.tag; }
+
+     /** Возвращает массив атрибутов.
+      * 
+      * @returns { {key: string, value: any}[] } Атрибуты
+      */
+     getAttributes() { return this.#params.attributes; }
+ 
+     /** Возвращает содержимое.
+      * 
+      * @returns { any } Содержимое
+      */
+     getContent() { return this.#params.content; }
+ 
+     /** Возвращает следующее событие (Stage) в цикле for .. of
      * (OPENTAG, CLOSETAG, SINGLETAG, CONTENT).
      * 
      * @returns { {done: boolean, value: symbol} } Текущее событие
@@ -140,7 +148,8 @@ class Parser {
         this.#currentStage = this.#nextStage;
         this.#params.tag = '';
         this.#params.content = '';
-        this.#params.attributes = {};
+        this.#params.attributes = [];
+        this.#currentIndex++;
 
         this.#parse();
 
@@ -154,18 +163,7 @@ class Parser {
         } else { return { done: true }; }
     }
 
-    /**
-     * Возвращает прочитанную информацию.
-     */
-    getNext() {
-        
-        try { return JSON.parse(this.#params.buffer.trim()); }
-        
-        catch { return this.#params.buffer.trim(); }
-    }
-
-    /**
-     * Сканирует текст, меняет параметры парсера (this.#params).
+    /** Сканирует текст, меняет параметры парсера (this.#params).
      * 
      * @throws { XmlStatementError } Неверный синтаксис
      */
@@ -220,7 +218,8 @@ class Parser {
 
                 case Stage.VALUE:
                     if (currentChar === this.#params.quote) {
-                        this.#readValue();
+                        this.#addAttribute();
+                        break;
                     }
                     this.#params.value += currentChar;
                     break;
@@ -231,7 +230,7 @@ class Parser {
 
                 case Stage.CONTENT:
                     if (currentChar === '<') {
-                        this.#readContent();
+                        this.#saveContent();
                         return;
                     }
                     this.#params.content += currentChar;
@@ -254,8 +253,7 @@ class Parser {
         }
     }
 
-    /**
-     * Выбор события после WAITTAG.
+    /** Выбор события после WAITTAG.
      * 
      * @param { string } nextChar Следующий символ
      * @param { boolean } nextIsSpace Является ли следующий символ пробельным?
@@ -301,8 +299,7 @@ class Parser {
         }
     }
 
-    /**
-     * Выбор события при чтении тега.
+    /** Возвращает результат чтения тега.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -346,6 +343,7 @@ class Parser {
 
                 this.#currentStage = Stage.SINGLETAG;
                 this.#nextStage = Stage.WAITTAG;
+                this.#currentIndex++;
 
                 return {
                     tagIsFormed: true,
@@ -365,9 +363,8 @@ class Parser {
         };
     }
 
-    /**
-     * Выбор события после WAITKEY.
-     * Возвращет true, если необходимо завершить парсинг текущего блока.
+    /** Возвращет результат ожидания ключа атрибута.
+     * true, если необходимо завершить парсинг текущего блока.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -415,8 +412,7 @@ class Parser {
         return false;
     }
 
-    /**
-     * Читает ключ атрибута.
+    /** Читает ключ атрибута.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -443,17 +439,12 @@ class Parser {
                 throw new XmlStatementError(`Unexpected sign (${currentChar})! Position: ${this.#currentIndex}`);
         }
 
-        if (currentChar === '=') {
-            this.#currentStage = Stage.WAITVALUE;
-            return;
-        }
         this.#params.key += currentChar;
         
         return;
     }
 
-    /**
-     * Ждёт знак равенства '='.
+    /** Ждёт знак равенства '='.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -472,8 +463,7 @@ class Parser {
         }
     }
 
-    /**
-     * Ждёт значение атрибута.
+    /** Ждёт значение атрибута.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -485,22 +475,16 @@ class Parser {
         if (currentChar === '"' || currentChar === "'") {
             this.#currentStage = Stage.VALUE;
             this.#params.quote = currentChar;
+            return;
         }
 
         if (!currentIsSpace) {
             throw new XmlStatementError(`Value missed! Start quot(' or ") missed. Position: ${this.#currentIndex}`);
         }
-
-        return;
     }
 
-    /**
-     * Читает значение атрибута.
-     * 
-     * @param { string } currentChar Текущий символ
-     * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
-     */
-    #readValue() {
+    /** Добавляет атрибут в массив. */
+    #addAttribute() {
 
         let value;
 
@@ -526,8 +510,7 @@ class Parser {
         this.#currentStage = Stage.WAITKEY;
     }
 
-    /**
-     * Ждёт содержимое.
+    /** Ждёт содержимое.
      * 
      * @param { string } currentChar Текущий символ
      * @param { boolean } currentIsSpace Является ли текущий символ пробельным?
@@ -536,18 +519,18 @@ class Parser {
 
         if (currentChar === '<') {
             this.#currentStage = Stage.TAG;
-            break;
+            return;
         }
 
         if (!currentIsSpace) {
             this.#currentStage = Stage.CONTENT;
             this.#params.content += currentChar;
-            break;
+            return;
         }
     }
 
-    /** Читает содержимое. */
-    #readContent() {
+    /** Сохраняет преобразованное содержимое. */
+    #saveContent() {
 
         let content;
 
@@ -564,13 +547,11 @@ class Parser {
         }
 
         this.#nextStage = Stage.TAG;
-        
         this.#params.content = content;
     }
 
-    /**
-     * Читает закрывающий тег.
-     * Возвращет true, если необходимо завершить парсинг текущего блока.
+    /** Возвращает результат чтения закрывающего тега.
+     * true, если необходимо завершить парсинг текущего блока.
      * 
      * @param { string } currentChar Текущий символ
      * 
@@ -589,7 +570,6 @@ class Parser {
 
                 if (openTag === closeTag) {
                     this.#nextStage = Stage.WAITTAG;
-                    this.#params.tag = '';
                     return true;
 
                 } else {
@@ -608,8 +588,7 @@ class Parser {
         return false;
     }
 
-    /**
-     * Читает комментарий.
+    /** Читает комментарий.
      * 
      * @param { string } currentChar Текущий символ
      */
@@ -619,15 +598,14 @@ class Parser {
         }
     }
 
-    /**
-     * Читает пролог.
+    /** Читает пролог.
      * 
      * @param { string } currentChar Текущий символ
      */
     #readProlog(currentChar) {
         if (currentChar === '>') {
             this.#currentStage = Stage.WAITTAG;
-            break;
+            return;
         }
         this.#prolog += currentChar;
     }

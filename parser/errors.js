@@ -12,7 +12,7 @@ class XmlStatementError extends Error {
     }
 }
 
-/** Исключение для предотвращения создания экземпляра Stage */
+/** Исключение для предотвращения создания экземпляра Stage. */
 class StageInstatiationError extends Error {
 
     constructor() {

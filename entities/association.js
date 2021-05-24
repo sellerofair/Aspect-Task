@@ -3,7 +3,7 @@
 // Использованы CommonJS модули для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-/** Класс ассоциации */
+/** Класс ассоциации. */
 class Association {
 
     constructor() {}
@@ -21,7 +21,7 @@ class Association {
     setEnd(end) { this.#end = end; }
 }
 
-/** Класс роли */
+/** Класс роли. */
 class Role {
 
     constructor() {}
@@ -36,8 +36,7 @@ class Role {
     setMultiplicity(multiplicity) { this.#multiplicity = multiplicity }
 }
 
-/**
- * Класс начала
+/** Класс начала.
  * 
  * @extends Role
  */
@@ -46,8 +45,7 @@ class Begin extends Role {
     constructor() { super(); }
 }
 
-/**
- * Класс конца
+/** Класс конца.
  * 
  * @extends Role
  */

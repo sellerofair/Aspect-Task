@@ -4,24 +4,24 @@
 // Если есть возможность, можно переделать на ES6.
 
 const { Repository } = require('./entities/repo');
-const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./entities/entity');
 const { Association, Begin, End } = require('./entities/association');
+const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./entities/entity');
 
 const { XmlStatementError } = require('./parser/errors');
-const { Parser } = require('./parser/parser');
+const { Parser, LinkedString } = require('./parser/parser');
 const { Stage } = require('./parser/enums');
 
 const { testData } = require('./constants/data');
 
-let repository = new Repository(['associations', 'enities']);
+// let repository = new Repository(['associations', 'enities']);
 
-let parser = new Parser(testData);
+// let parser = new Parser(testData);
 
 /**
  * Преобразует строку в формате XML в JS объект
  * 
  * @param {string} data Строка в формате XML
- * @returns {object} Объект, полученный из XML
+ * 
  * @throws {XmlStatementError} Неверный синтаксис
  */
 function xml2json(repository, parser) {
@@ -223,13 +223,18 @@ function xml2json(repository, parser) {
     return jsonObject;
 };
 
-// let testObject = xml2json(`  
-// <A B ="C" X ="Y">75
-//     <D E="F"/>
-// </A>
-// <A B ="R" X="Z">
-//     <D E="G"/>
-//     <D E="K"/>
-// </A>`);
+let str = `
+<A B="C">
+    <D E = "F"/>
+</A>`
+// Создаем обертку для входящей строки. По возможности должна передаваться строка без промежуточных переменных.
+const linkSrt = new LinkedString(str);
+// Создаем экземпляр парсера.
+let parser = new Parser(linkSrt);
 
-// console.log(testObject);
+for (let stage of parser) {
+    console.log(stage);
+    if (stage === Stage.OPENTAG) {
+        console.log(parser.getTagName());
+    }
+}
