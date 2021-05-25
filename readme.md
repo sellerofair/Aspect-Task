@@ -36,35 +36,39 @@
 ## Реализация
 ### constants
 **Папка с константами**
+
 Содержит модуль **data**, который предоставляет доступ к ссылочной строке **testData** типа **LinkedString**.
 Нужна для разгрузки основного файла **script**.
 ### entities
 **Пакет для хранения данных**
+
 Предоставляет доступ к классам всех сущностей, а также к классу **Repository**.
 Более подробное описание см. [тут](./entities#readme).
 ### parser
 **Пакет для парсинга XML**
+
 Более подробное описание см. [тут](./parser#readme).
 ### script
 **Основной модуль**
-Содержит функции (и подфункции), являющиеся решением поставленной задачи.
-#### addXmlToReposytory(repository, parser)
+
+Содержит функции и подфункции, являющиеся решением поставленной задачи.
+### addXmlToReposytory(repository, parser)
 Добавляет в репозиторий данные из XML, на котором основан переданный парсер.
-##### addAssociation(repository, parser)
+### addAssociation(repository, parser)
 Подфункция.
 Добавляет ассоциацию в репозиторий.
-###### addEnd(repository, parser)
+### addEnd(repository, parser)
 Подфункция.
 Добавляет роль в ассоциацию.
-##### addEntity(repository, parser)
+### addEntity(repository, parser)
 Подфункция.
 Добавляет сущность в репозиторий.
-###### addKey(entity, parser)
+### addKey(entity, parser)
 Подфункция.
 Добавляет ключ в сущность.
-###### addProperty(entity, parser)
+### addProperty(entity, parser)
 Подфункция.
 Добавляет свойство в сущность.
-###### addNavigationProperty(entity, parser)
+### addNavigationProperty(entity, parser)
 Подфункция.
 Добавляет навигационное свойство в сущность.
