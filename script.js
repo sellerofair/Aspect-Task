@@ -3,7 +3,7 @@
 // Использованы CommonJS модули для тестов в NodeJS.
 // Если есть возможность, можно переделать на ES6.
 
-const { Repository } = require('./entities/repo');
+const { Repository } = require('./entities/repository');
 const { Association, End } = require('./entities/association');
 const { EntityType, Key, PropertyRef, Property, NavigationProperty } = require('./entities/entity');
 
