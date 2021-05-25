@@ -22,7 +22,7 @@ let parser = new Parser(testData);
  * @param { Repository } repository Куда добавлять
  * @param { Parser } parser Откуда добавлять
  */
-function addXmlToReposytory(repository, parser) {
+function addXmlToRepository(repository, parser) {
 
     for (let _ of parser) {
 
@@ -220,6 +220,6 @@ function getEntityByName(repository, name) {
     return result;
 }
 
-addXmlToReposytory(repository, parser);
+addXmlToRepository(repository, parser);
 
 console.log((getEntityByName(repository, 'Валюты')));

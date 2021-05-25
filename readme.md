@@ -46,7 +46,7 @@
 ### script
 **Основной модуль**  
 Содержит функции и подфункции, являющиеся решением поставленной задачи.
-### addXmlToReposytory(repository, parser)
+### addXmlToRepository(repository, parser)
 Добавляет в репозиторий данные из XML, на котором основан переданный парсер.
 ### addAssociation(repository, parser)
 Подфункция.
