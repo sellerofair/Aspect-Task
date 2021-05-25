@@ -83,9 +83,6 @@ for (let stage of parser) {
 **LOG:**
 
 *Symbol(OPENTAG)*  
-
 *A*  
-
 *Symbol(SINGLETAG)*  
-
 *Symbol(CLOSETAG)*  
