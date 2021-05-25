@@ -7,9 +7,7 @@
 
 const { LinkedString } = require('../parser/parser');
 
-/**
- * Исходные данные в формате XML
- */
+/** Исходные данные в формате XML */
 const testData = new LinkedString(`			<Association Name="Catalog_Номенклатура_Parent">
 <End Role="Begin"
         Type="StandardODATA.Catalog_Номенклатура"

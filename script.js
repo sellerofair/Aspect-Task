@@ -16,7 +16,7 @@ let repository = new Repository(['associations', 'entities']);
 
 let parser = new Parser(testData);
 
-/** Добавление в репозиторий данных из XML,
+/** Добавляет в репозиторий данные из XML,
  * на котором основан переданный парсер.
  * 
  * @param { Repository } repository Куда добавлять
@@ -40,7 +40,7 @@ function addXmlToReposytory(repository, parser) {
     }
 }
 
-/** Добавление Ассоциации в репозиторий.
+/** Добавляет ассоциацию в репозиторий.
  * 
  * @param { Repository } repository Куда добавлять
  * @param { Parser } parser Откуда добавлять
@@ -58,7 +58,7 @@ function addAssociation(repository, parser) {
     repository.associations.push(association);
 }
 
-/** Добавление роли в ассоциацию.
+/** Добавляет роль в ассоциацию.
  * 
  * @param { Association } association Куда добавлять
  * @param { Parser } parser Откуда добавлять
@@ -75,10 +75,10 @@ function addEnd(association, parser) {
     association.ends.push(end);
 }
 
-/** Добавление Сущности в репозиторий.
+/** Добавляет сущность в репозиторий.
  * 
- * @param { Repository } repository Целевой репозиторий
- * @param { Parser } parser Парсер необходимой строки
+ * @param { Repository } repository Куда добавлять
+ * @param { Parser } parser Откуда добавлять
  */
 function addEntity(repository, parser) {
 
@@ -112,10 +112,10 @@ function addEntity(repository, parser) {
     repository.entities.push(entity);
 }
 
-/** Добавление ключа в сущность.
+/** Добавляет ключ в сущность.
  * 
- * @param { EntityType } entity Целевой репозиторий
- * @param { Parser } parser Парсер необходимой строки
+ * @param { EntityType } entity Куда добавлять
+ * @param { Parser } parser Откуда добавлять
  */
 function addKey(entity, parser) {
 
@@ -130,10 +130,10 @@ function addKey(entity, parser) {
     entity.keys.push(key);
 }
 
-/** Добавление свойства в сущность.
+/** Добавляет свойство в сущность.
  * 
- * @param { EntityType } entity Целевой репозиторий
- * @param { Parser } parser Парсер необходимой строки
+ * @param { EntityType } entity Куда добавлять
+ * @param { Parser } parser Откуда добавлять
  */
 function addProperty(entity, parser) {
 
@@ -147,10 +147,10 @@ function addProperty(entity, parser) {
     entity.properties.push(property);
 }
 
-/** Добавление навигационного свойства в сущность.
+/** Добавляет навигационное свойство в сущность.
  * 
- * @param { EntityType } entity Целевой репозиторий
- * @param { Parser } parser Парсер необходимой строки
+ * @param { EntityType } entity Куда добавлять
+ * @param { Parser } parser Откуда добавлять
  */
 function addNavigationProperty(entity, parser) {
 
@@ -165,6 +165,61 @@ function addNavigationProperty(entity, parser) {
     entity.navigationProperties.push(navigationProperty);
 }
 
+/** Возвращает сущность по имени в формате JSON.
+ * 
+ * @param { Repository } repository Где искать
+ * @param { string } name Что искать
+ * @returns { string } Сущность в формате JSON
+ */
+function getEntityByName(repository, name) {
+
+    /** @type { EntityType } */
+    let entity = repository.getElementFromFieldByName('entities', name);
+    
+    let result = {
+        name: '',
+        type: '',
+        keyProperties: [],
+        properties: []
+    };
+
+    let entityName = entity.name;
+    
+    result.name = entityName;
+
+    result.type = entityName.slice(0, entityName.indexOf('_'));
+
+    for (let keyProperty of entity.keys[0].propertyRefs) {
+        result.keyProperties.push(keyProperty.name);
+    }
+
+    for (let property of entity.properties) {
+
+        let resultProperty = {
+            name: property.name,
+            type: property.type,
+            required: !property.nullable,
+            refName: null
+        };
+
+        result.properties.push(resultProperty);
+    }
+
+    for (let property of entity.navigationProperties) {
+
+        let resultProperty = {
+            name: property.name,
+            type: null,
+            required: null,
+            refName: property.relationship
+        };
+
+        result.properties.push(resultProperty);
+    }
+
+    return result;
+}
+
 addXmlToReposytory(repository, parser);
 
-console.log(repository.getElementFromFieldByName('entities', 'Валюты'));
+console.log((getEntityByName(repository, 'Валюты')));

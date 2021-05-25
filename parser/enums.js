@@ -8,7 +8,7 @@ const { StageInstatiationError } = require('./errors');
 /** Набор возможных событий при парсинге XML.
  * Поля не должны изменяться при использовании класса.
  */
- class Stage {
+class Stage {
 
     constructor() { throw new StageInstatiationError(); }
 
