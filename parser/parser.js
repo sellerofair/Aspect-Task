@@ -191,8 +191,8 @@ class Parser {
                         parseIsCompleted: parseIsCompleted
                     } = this.#readTagStatus(currentChar, currentIsSpace, nextChar);
 
-                    if (tagIsFormed) break;
                     if (parseIsCompleted) return;
+                    if (tagIsFormed) break;
 
                     this.#params.tag += currentChar;
 

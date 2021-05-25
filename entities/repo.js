@@ -12,19 +12,8 @@ class Repository {
      */
     constructor(fields) {
 
-        this.#content = {};
-
         for (let field of fields) { this.addField(field); }
     }
-
-    /** Содержимое репозитория @type { any[] }*/
-    #content;
-
-    /** Возвращает содержимое репозитория.
-     * 
-     * @returns { object } Содержимое репозитория
-     */
-    getContent() { return this.#content; }
 
     /** Добавляет новое поле в репозиторий.
      * 
@@ -32,19 +21,8 @@ class Repository {
      */
     addField(name) {
 
-        /** Имя поля с заглавной буквы */
-        let nameProper = name[0].toUpperCase() + name.slice(1);
-
         // Добавление нового поля
-        this.#content[name] = [];
-        
-        /** Геттер для получения массива полей
-         * 
-         * @returns { function: void }
-         */
-        this['get' + nameProper] = function() {
-            return this.#content[name];
-        }
+        this[name] = [];
     }
 
     /** Удаление поля из репозитория по имени.
@@ -53,52 +31,25 @@ class Repository {
      */
     deleteField(name) {
 
-        /** Имя поля с заглавной буквы */
-        let nameProper = name[0].toUpperCase() + name.slice(1);
-
         // Удаление поля
-        delete this.#content[name];
-
-        // Удаление геттера
-        delete this['get' + nameProper];
+        delete this[name];
     }
 
-    /** Возвращает экземпляр сущности по ее наименованию.
+    /** Возвращает экземпляр из поля по наименованию.
      * 
-     * @param { string } entityName Наименование сущности
+     * @param { string } field Откуда возвращать
+     * @param { string } name Что возвращать
      * 
-     * @returns { RepoEntity } Экземпляр сущности
+     * @returns { any } Экземпляр
      */
-    getEnityByName(entityName) {
+    getElementFromFieldByName(field, name) {
 
-                                                                                            // TODO
-        let enity = new Entity();
-        enity.setName(entityName);
-
-        return enity;
+        for (let element of this[field.toLowerCase()]) {
+            if (element.name.includes(name)) {
+                return element;
+            }
+        }
     }
-}
-
-/** Представление сущности для возвращения из репозитория */
-class RepoEntity {
-
-    constructor() {}
-
-    #name;
-    #type;
-    #keyProperties;
-    #properties;
-
-    getName() { return this.#name; }
-    getType() { return this.#type; }
-    getKeyProperties() { return this.#keyProperties; }
-    getProperties() { return this.#properties; }
-
-    setName(name) { this.#name = name; }
-    setType(type) { this.#type = type; }
-    setKeyProperties(keyProperties) { this.#keyProperties = keyProperties; }
-    setProperties(properties) { this.#properties = properties }
 }
 
 module.exports.Repository = Repository;
-module.exports.RepoEntity = RepoEntity;

@@ -6,34 +6,48 @@
 /** Класс типа сущности */
 class EntityType {
 
-    constructor() { this.#openType = false; }
+    constructor() {
+        this.openType = false;
+        this.keys = [];
+        this.properties = [];
+        this.navigationProperties = [];
+    }
 
-    #name;
-    #openType;
-    #keys;
-    #properties;
+    /** Наименование сущности.
+     * @type { string }
+     */
+    name;
 
-    getName() { return this.#name; }
-    getOpenType() { return this.#openType; }
-    getKeys() { return this.#keys; }
-    getProperties() { return this.#properties; }
+    /** Является ли сущность открытым типом.
+     * @type { boolean }
+     */
+    openType;
 
-    setName(name) { this.#name = name; }
-    setOpenType(openType) { this.#openType = openType; }
-    setKeys(keys) { this.#keys = keys; }
-    setProperties(properties) { this.#properties = properties }
+    /** Ключи.
+     * @type { Key[] }
+     */
+    keys;
+
+    /** Свойства.
+     * @type { Property[] }
+     */
+    properties;
+
+    /** Навигационные свойства.
+     * @type { NavigationProperty[] }
+     */
+    navigationProperties;
 }
 
 /** Класс ключа */
 class Key {
 
-    constructor() {}
+    constructor() { this.propertyRefs = []; }
 
-    #propertyRefs;
-
-    getPropertyRefs() { return this.#propertyRefs; }
-
-    setPropertyRefs(propertyRefs) { this.#propertyRefs = propertyRefs; }
+    /** Ссылки свойств.
+     * @type { PropertyRef[] }
+     */
+    propertyRefs;
 }
 
 /** Класс ссылочного свойста */
@@ -41,11 +55,10 @@ class PropertyRef {
 
     constructor() {}
 
-    #name;
-
-    getName() { return this.#name; }
-
-    setName(name) { this.#name = name; }
+    /** Наименование сущности.
+     * @type { string }
+     */
+    name;
 }
 
 /** Класс свойства */
@@ -53,17 +66,20 @@ class Property {
 
     constructor() {}
 
-    #name;
-    #type;
-    #nullable;
+    /** Наименование свойства.
+     * @type { string }
+     */
+    name;
+    
+    /** Тип свойства.
+     * @type { string }
+     */
+    type;
 
-    getName() { return this.#name; }
-    getType() { return this.#type; }
-    getNullable() { return this.#nullable; }
-
-    setName(name) { this.#name = name; }
-    setType(type) { this.#type = type }
-    setNullable(nullable) { this.#nullable = nullable }
+    /** Может быть пустым.
+     * @type { boolean }
+     */
+    nullable;
 }
 
 /** Класс навигационного свойства */
@@ -71,20 +87,25 @@ class NavigationProperty {
 
     constructor() {}
 
-    #name;
-    #relationship;
-    #fromRole;
-    #toRole;
+    /** Наименование свойства.
+     * @type { string }
+     */
+    name;
 
-    getName() { return this.#name; }
-    getRelationship() { return this.#relationship; }
-    getFromRole() { return this.#fromRole; }
-    getToRole() { return this.#toRole; }
+    /** Отношение.
+     * @type { string }
+     */
+    relationship;
 
-    setName(name) { this.#name = name; }
-    setRelationship(relationship) { this.#relationship = relationship; }
-    setFromRole(fromRole) { this.#fromRole = fromRole; }
-    setToRole(toRole) { this.#toRole = toRole; }
+    /** Наименование свойства.
+     * @type { string }
+     */
+    fromRole;
+
+    /** Наименование свойства.
+     * @type { string }
+     */
+    toRole;
 }
 
 module.exports.EntityType = EntityType;
